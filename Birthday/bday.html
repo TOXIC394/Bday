@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Access Portal</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import Font for the modern, tech aesthetic */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #0F172A; /* bg-gray-900 equivalent */
+        }
+        
+        /* Custom styles for the interactive box/data packet */
+        .gift-box-cover {
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(0, 180, 255, 0.4);
+        }
+
+        .gift-box-cover:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 180, 255, 0.8);
+        }
+        
+        /* The final card reveal animation (mimicking Angular's pop-in) */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .pop-in {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Enforce monospace font on key elements */
+        h1, h2, h3, button, input {
+            font-family: 'Roboto Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-md bg-gray-800 rounded-3xl shadow-2xl p-6 md:p-10 border-4 border-blue-500 text-white">
+
+        <!-- Stage 1: Password Gate -->
+        <div id="password-screen" class="flex flex-col items-center space-y-8 transition-opacity duration-500">
+            <h1 class="text-5xl font-extrabold tracking-wider text-teal-400">ACCESS CONTROL</h1>
+            <p class="text-gray-300 text-lg text-center">Enter passcode to unlock your surprise.</p>
+            
+            <input 
+                type="password" 
+                id="password-input" 
+                placeholder="Key Required" 
+                class="w-full p-4 border-2 border-blue-400 bg-gray-700 text-white rounded-xl text-center focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition duration-300 shadow-inner text-xl font-mono outline-none"
+                onkeyup="if(event.key === 'Enter') checkPassword()"
+            >
+            
+            <button 
+                id="unlock-button" 
+                onclick="checkPassword()"
+                class="w-full py-4 bg-blue-600 text-white font-bold text-xl uppercase tracking-widest rounded-xl shadow-lg hover:bg-blue-700 transform transition duration-300 hover:scale-[1.02] active:scale-[0.98] border border-blue-800"
+            >
+                Authenticate
+            </button>
+
+            <p id="error-message" class="text-red-400 font-medium text-sm transition duration-300 h-6 opacity-0">
+                <!-- Error message appears here -->
+            </p>
+        </div>
+
+        <!-- Stage 2: Interactive Gift Card Reveal -->
+        <div id="gift-screen" class="hidden flex flex-col items-center space-y-8 text-center transition-opacity duration-500">
+            <h2 class="text-4xl font-extrabold text-teal-400">ACCESS GRANTED</h2>
+            <p class="text-lg text-gray-300">You cracked the code. Tap the data packet to view the message.</p>
+
+            <!-- Interactive Gift Box/Card Cover -->
+            <div id="gift-box" 
+                onclick="openCard()"
+                class="w-40 h-40 bg-teal-600 rounded-2xl flex items-center justify-center shadow-2xl border-4 border-gray-700 cursor-pointer gift-box-cover"
+            >
+                <!-- Stylized Key Icon (SVG) -->
+                <svg class="w-10 h-10 text-amber-300" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1.5C6.75 1.5 2.5 5.75 2.5 11s4.25 9.5 9.5 9.5 9.5-4.25 9.5-9.5-4.25-9.5-9.5-9.5zM12 19.5c-4.69 0-8.5-3.81-8.5-8.5S7.31 2.5 12 2.5s8.5 3.81 8.5 8.5-3.81 8.5-8.5 8.5zM12.75 6a.75.75 0 00-1.5 0v5.25H6a.75.75 0 000 1.5h6.75V6z"/>
+                </svg>
+            </div>
+            <p class="text-sm text-gray-500">Decrypt Message</p>
+        </div>
+
+        <!-- Stage 3: The Gift Card Content -->
+        <div id="card-content" class="hidden text-center p-6 bg-blue-900 rounded-2xl border-2 border-teal-400 shadow-xl pop-in">
+            <h3 class="text-4xl font-extrabold text-teal-300 mb-4 uppercase">Mission Accomplished</h3>
+            <p class="text-lg text-gray-200 leading-relaxed mb-4">
+                Access granted to the core message:
+               My sincerest apologies for the late wish! I hope you had a brilliant birthday celebration. Wishing you a year ahead filled with joy, exciting new adventures, and great success in everything you pursue.<h1>Happy Birthday!<h1>
+            <p class="text-xl font-bold text-blue-400 mt-6">
+                Happy Birthday, Agent ALexx! ⚙️
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const SECRET_PASSWORD = "alexx"; // The secret key
+
+        // --- DOM Elements ---
+        const passwordScreen = document.getElementById('password-screen');
+        const giftScreen = document.getElementById('gift-screen');
+        const cardContent = document.getElementById('card-content');
+        const passwordInput = document.getElementById('password-input');
+        const errorMessage = document.getElementById('error-message');
+        const giftBox = document.getElementById('gift-box');
+        
+        /**
+         * Clears and shows an error message for a short duration.
+         */
+        function displayError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('opacity-0');
+            errorMessage.classList.add('opacity-100');
+            
+            // Auto-hide error after 2.5 seconds
+            setTimeout(() => {
+                errorMessage.classList.remove('opacity-100');
+                errorMessage.classList.add('opacity-0');
+            }, 2500);
+        }
+
+        /**
+         * Checks the entered password against the secret.
+         */
+        function checkPassword() {
+            const enteredPassword = passwordInput.value.trim().toLowerCase();
+            
+            if (!enteredPassword) {
+                displayError('Input cannot be empty.');
+                return;
+            }
+
+            if (enteredPassword === SECRET_PASSWORD) {
+                // Correct password: Transition to the gift screen
+                passwordScreen.classList.add('hidden');
+                giftScreen.classList.remove('hidden');
+                giftScreen.classList.add('flex'); 
+            } else {
+                // Incorrect password: Show error
+                displayError('ACCESS DENIED. Incorrect key.');
+            }
+            passwordInput.value = ''; // Clear input field
+        }
+
+        /**
+         * Opens the card content upon clicking the gift box.
+         */
+        function openCard() {
+            // Hide the interactive gift screen elements
+            giftScreen.classList.add('hidden');
+            
+            // Show the final card content with the animation
+            cardContent.classList.remove('hidden');
+            
+            // Remove the click handler from the box once opened
+            giftBox.onclick = null;
+        }
+
+        // Optional: Focus on the input field when the page loads
+        window.onload = () => {
+            passwordInput.focus();
+        };
+    </script>
+</body>
+</html>
